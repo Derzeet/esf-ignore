@@ -1,0 +1,26 @@
+@font-face {
+  font-family: 'Montserrat';
+  src: url(fonts/montserrat/Montserrat-VariableFont_wght.ttf);
+}
+
+:root {
+  
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0D0F11;
+  display: flex;
+  place-items: center;
+  min-height: 100vh;
+
+  background-color: #0D0F11;
+  /* background-image: url(./images/bg-image.png); */
+  background-size: 100%;
+  background-position: top left;
+  background-repeat: no-repeat;
+}

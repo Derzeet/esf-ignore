@@ -1,0 +1,9 @@
+CREATE TABLE public.news (
+	id int8 NOT NULL,
+	title varchar(255) NULL,
+	description varchar(255) NULL,
+	image text NULL,
+	dateofcreated timestamp NULL,
+	"comments" _text NULL,
+	CONSTRAINT news_pkey PRIMARY KEY (id)
+);

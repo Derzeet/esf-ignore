@@ -1,0 +1,38 @@
+.wholeBlock {
+    width: 100%;
+    height: 100%;
+
+    overflow-y: hidden;
+    
+    > .searchBar {
+        float: left;
+        box-sizing: border-box;
+        width: 23%;
+        height: 100%;
+        background-color: #0D0F11;
+        border-right: 1px solid #414141;
+        display: flex;
+        flex-direction: column;
+        padding-top: 100px;
+        // justify-content: center;
+        align-items: center;
+    }
+    
+    > .tableBlock {
+        height: 100vh;
+        // overflow: scroll; 
+        
+        width: 77%;
+        float: inline-end;
+        margin-top: 100px;
+        display: inline-block;
+        
+        > .tableSam {
+            // overflow-y: scroll !important;
+
+            // max-height: 60%;
+            width: 90%;
+            margin: 0 auto;
+        }
+    }
+}
