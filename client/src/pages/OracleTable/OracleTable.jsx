@@ -46,17 +46,23 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import admins from "../../listOfAdmins/admins"
+import admins from "../../listOfAdmins/admins";
+import { createTheme, ThemeProvider } from '@mui/material';
+import default_host from "../../config/config";
+import { object } from "yup";
+import { LineStyle } from "@mui/icons-material";
+
+
 function userAdmin() {
-    const login = Cookies.get('login');
-    if (admins.includes(login)) {
-        return true
-    } else {
-        return false
-    }
+    return true
+    // const login = Cookies.get('login');
+    // if (admins.includes(login)) {
+    //     return false
+    // } else {
+    //     return false
+    // }
 }
 
-const baseURL = "http://192.168.30.24:9265/"
 const fields = {
   "DESCRIPTION": "Описание товара",
   "UNIT_CODE": "Код товара",
@@ -88,7 +94,7 @@ function getStyles(name, personName, theme) {
     };
 }
 
-function OracleTable(props) {
+function OracleTableESF(props) {
     const theme = useTheme();
     const navigate = useNavigate()
     const [groupField, setGroupFields] = React.useState([])
@@ -173,11 +179,11 @@ function OracleTable(props) {
         }
         setLoading(true)
         handleClose();
-        setDisplayColumns(groupField)
-        const token = Cookies.get('token');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setDisplayColumns([...groupField, 'NAMES_SELLER', 'NAME_CUSTOMER'])
+        // const token = Cookies.get('token');
+        // axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         console.log(params)
-        axios.get(baseURL + 'esf', {params: params}).then((res) => {
+        axios.get(default_host + 'esf', {params: params}).then((res) => {
             console.log(res.data)
             setMainList(res.data)
             setLoading(false)
@@ -200,7 +206,25 @@ function OracleTable(props) {
             groupField: last_groupField.join(',')
         }
         axios
-            .get(baseURL + 'download', {params: params, responseType: 'blob'})
+            .get(default_host + 'download', {params: params, responseType: 'blob'})
+            .then(response => {
+                const file = new Blob([response.data]);
+                saveAs(file, 'data.xlsx');
+            })
+            .catch(error => {
+                console.error('Error downloading file:', error);
+            });
+    }
+    const downloadFull = () => {
+        const params = {
+            filter: last_filter,
+            search: last_search,
+            startDate: last_startDate,
+            endDate: last_endDate,
+            groupField: last_groupField.join(',')
+        }
+        axios
+            .get(default_host + 'downloadFull', {params: params, responseType: 'blob'})
             .then(response => {
                 const file = new Blob([response.data]);
                 saveAs(file, 'data.xlsx');
@@ -223,8 +247,47 @@ function OracleTable(props) {
         Cookies.remove('login')
         navigate('/login')
     }
+
+    const esfTheme = createTheme({
+        palette: {
+            mode: 'dark',
+            // primary: {
+            //   // light: will be calculated from palette.primary.main,
+            //   main: '#3F7E6F',
+            //   // dark: will be calculated from palette.primary.main,
+            //   // contrastText: will be calculated to contrast with palette.primary.main
+            // },
+        },
+        typography: {
+            fontFamily: 'Montserrat',
+            fontSize: 13
+        },
+        components: {
+            MuiOutlinedInput: {
+                styleOverrides: {
+                    root: {
+                        // minHeight: 'max-content',
+                        // maxHeight: '30px',
+                        // fontSize: '9px',
+                        backgroundColor: '#0D0F11'
+                    },
+                    focused: {
+                        backgroundColor: '#0D0F11'
+                    },
+                    input: {
+                        '&:-webkit-autofill': {
+                            WebkitBoxShadow: '0 0   0 100px #0D0F11 inset'
+
+                        }
+                    }
+                }
+            }
+        }
+    })
+
     return (
-        <div className="wholeBlock">
+        <ThemeProvider theme={esfTheme} >
+            <div className="wholeBlock">
             <Dialog open={openDialog} onClose={handleClose} PaperProps={{ style: { width: 800, top: -10}}}>
                 <div style={{padding: '10px', backgroundColor: '#0D0F11', borderRadius: '2px', border: '0.1px solid rgba(134, 134, 134, 0.31)'}}>
                     <DialogTitle><a style={{fontWeight: 700, fontSize: '25px'}}>Основания проверки</a></DialogTitle>
@@ -286,7 +349,7 @@ function OracleTable(props) {
                                 >
                                     <MenuItem value={'seller'}>Продавец</MenuItem>
                                     <MenuItem value={'custumer'}>Покупатель</MenuItem>
-                                    <MenuItem value={'good'}>Описание товара</MenuItem>
+                                    {/*<MenuItem value={'good'}>Описание товара</MenuItem>*/}
                             </Select>
                             <FormControl>
                                 {/* <InputLabel id="outlined-basic">Поиск</InputLabel> */}
@@ -296,8 +359,8 @@ function OracleTable(props) {
                                     // size= "small" 
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    sx={{width: '100%', p: 0}} 
-                                    style={{ margin: '0 auto', marginTop: '15px'}} 
+                                    sx={{width: '100%', p: 0}}
+                                    style={{ margin: '0 auto', marginTop: '15px', fontSize:"13px"}}
                                     variant="outlined" 
                                     helperText="Разделение через запятую"/>
 
@@ -372,47 +435,29 @@ function OracleTable(props) {
                             Логи
                         </Button>
                         :
-                        <></>
-                    }
+                        null
+                    } 
 
-                    <Button variant="outlined" onClick={() => deleteCookie()} endIcon={<ExitToAppIcon/>}>
+                    {/* <Button variant="outlined" onClick={() => deleteCookie()} endIcon={<ExitToAppIcon/>}>
                         Выйти
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
             <div className="tableBlock" style={{}}>
                 <div className="tableSam" style={{ height: '90% !important'}}> 
-                        <ResultTable list={mainList} columns={displayColumns}/>
-                    {loading && (
+                        <ResultTable list={mainList} columns={displayColumns} setList={setMainList}/>
+                    {loading ? (
                         <Box sx={{ width: '100%' }}>
                         <LinearProgress />
                         </Box>
-                    )}
-                    {!loading && (
-                        ""
-                    )}
+                    ) : ""}
                 </div>
-                {!loading && (
+                {mainList.length > 0 && (
                     <>
-                    {/* <div style={{display: 'flex', justifyContent: 'flex-start', float: 'right', marginRight: '5%'}}>
-                        <TableFooter >
-                            <TableRow >
-                                <TablePagination style={{borderBottom: 'hidden'}}
-                                    colSpan={3}
-                                    count={count}
-                                    rowsPerPage={10}
-                                    page={page}
-                                    onPageChange={handleChangePage}
-                                    ActionsComponent={TablePaginationActions}
-                                    rowsPerPageOptions={10}
-                                    />
-                            </TableRow>
-                        </TableFooter>
-                        </div> */}
                     <div style={{ marginTop: '100px', display: 'flex', justifyContent: 'flex-end', width: '95%'}}>
-                        {/*<IconButton onClick={download} aria-label="download" size="large">*/}
-                        {/*    <FileDownloadIcon fontSize="inherit" />*/}
-                        {/*</IconButton>*/}
+                        <IconButton onClick={downloadFull} aria-label="download" size="large">
+                            <FileDownloadIcon fontSize="inherit" />
+                        </IconButton>
                         <Button variant="outlined" onClick={download} aria-label="download" size="large"endIcon={<FileDownloadIcon/>}>
                             Скачать результат
                         </Button>
@@ -421,15 +466,20 @@ function OracleTable(props) {
                 )}
             </div>
         </div>
+        </ThemeProvider>
+
     )
 }
 
 
 function ResultTable(props) {
-    const {list, columns} = props
+    const {list, columns, setList} = props
+    const [sortOrder, setSortOrder] = React.useState('asc');
+    const [displayedColumn, setDisplayColumns] = React.useState([])
+
     const downloadSchema = (row) => {
 
-        axios.get('http://192.168.30.24:1415/export-to-pdf/' + row.messOfmId + '/' + row.memberId, {responseType: 'blob'}).then(res=> {
+        axios.get(default_host + 'export-to-pdf/' + row.messOfmId + '/' + row.memberId, {responseType: 'blob'}).then(res=> {
             const url = window.URL.createObjectURL(new Blob([res.data]))
             const link = document.createElement('a')
             link.href = url
@@ -444,11 +494,46 @@ function ResultTable(props) {
       "UNIT_CODE": "Код товара",
       "UNIT_NOMENCLATURE": "Единица измерения",
       "IIN_SELLER": "Продавец",
+
       "IIN_CUSTOMER": "Покупатель",
+
       "STATUS_CUSTOMER": "Статус покупателя",
+        "NAMES_SELLER": "Наименование Продавцов",
+        "NAME_CUSTOMER": "Наименование покупателя",
       "Total": "Всего",    
-      "QUANTITY": "Количество"    
+      "QUANTITY": "Количество",
     }
+
+    console.log(
+        Object.keys(list.length != 0 ? list[0] : {})
+    )
+
+    
+
+
+
+    const handleSort = () => {
+        // Toggle the sorting order
+        const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        setSortOrder(newSortOrder);
+
+        // Sort the list based on the Total property
+        const sortedList = [...list].sort((a, b) => {
+            const totalA = parseFloat(a.Total);
+            const totalB = parseFloat(b.Total);
+
+            if (newSortOrder === 'asc') {
+                return totalA - totalB;
+            } else {
+                return totalB - totalA;
+            }
+        });
+
+        // Update the list with the sorted order
+        // (assuming that list is a prop and should not be modified directly)
+        // Update the parent component state or do any necessary action with the sorted list
+        setList(sortedList);
+    };
   
     return ( <>
         <TableContainer component={Paper} sx={{maxHeight: 600}} >
@@ -456,11 +541,14 @@ function ResultTable(props) {
             <TableHead>
                 <TableRow>
                 <TableCell  sx={{ position: 'sticky', left: 0, zIndex: 1}}></TableCell>
-                {columns.map((column) => (
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}  key={column}>{Dcolumns[column]}</TableCell>
+                    {Object.keys(list.length != 0 ? list[0] : {}).slice(5).map((column) => (
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}  key={column}>{Dcolumns[column] ? Dcolumns[column] : column}</TableCell>
                     ))}
-                    <TableCell sx={{ whiteSpace: 'nowrap' }} >Всего</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }} >Количество</TableCell>
+                    {Object.keys(list.length != 0 ? list[0] : {}).slice(0, 5).map((column) => (
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}  key={column}>{Dcolumns[column] ? Dcolumns[column] : column}</TableCell>
+                    ))}
+                    {/* <TableCell sx={{ whiteSpace: 'nowrap' }} onClick={handleSort} style={{ cursor: 'pointer' }} ><a>Всего</a></TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }} >Количество</TableCell> */}
                 </TableRow>
             </TableHead>
             <TableBody>
@@ -471,14 +559,28 @@ function ResultTable(props) {
                     >
                     {/* <TableCell  sx={{ position: 'sticky', left: 0, zIndex: 1, backgroundColor: '#0D0F11'}}><p style={{cursor: 'pointer'}} onClick={() => downloadSchema(row)}>Скачать</p></TableCell> */}
                     <TableCell  component="th" sx={{ position: 'sticky', left: 0, zIndex: 1}} scope="row">{index+1}</TableCell>
-                      {Object.keys(row).map((key) => ( 
-                        <TableCell  component="th" scope="row">{row[key]}</TableCell>
+                      {Object.keys(row).slice(5).map((key) => (
+                        <TableCell  component="th" scope="row">{
+                                key == 'Total' ? 
+                                row[key] ? row[key].toLocaleString('en-US') : "0"
+                                : row[key]
+                            }</TableCell>
+                      ))
+                      }
+                      {Object.keys(row).slice(0, 5).map((key) => (
+                        <TableCell  component="th" scope="row">{row[key] ? row[key].toLocaleString('en-US') : "0"}</TableCell>
                       ))
                       }
                     </TableRow>
                 ))}
             </TableBody>
             </Table>
+            {list.length == 0 &&
+                <div style={{display: 'flex', justifyContent: 'center', height: '50px', alignItems: 'center'}}>
+                    <a>Нет результатов</a>
+                </div>
+
+            }
         </TableContainer>
         </>
     )
@@ -546,4 +648,4 @@ function ResultTable(props) {
       </Box>
     );
   }
-export default OracleTable
+export default OracleTableESF

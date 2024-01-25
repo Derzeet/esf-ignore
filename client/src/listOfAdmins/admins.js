@@ -1,3 +1,3 @@
-const admins = ["zhagalievzh", "zhaganlievzh"]
+const admins = ["zhagalievzh", "zhaganlievzh", 'zhaganlievzh']
 
 export default admins

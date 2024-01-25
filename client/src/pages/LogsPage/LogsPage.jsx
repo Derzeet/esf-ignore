@@ -11,6 +11,8 @@ import {useNavigate} from "react-router-dom";
 import admins from "../../listOfAdmins/admins"
 import Button from "@mui/material/Button";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import default_host from "../../config/config";
+
 const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'userLogin', headerName: 'Логин', width: 130 },
@@ -18,7 +20,6 @@ const columns = [
     { field: 'approvalBody', headerName: 'Основания проверки', width: 600 },
 ];
 
-const baseURL = "http://192.168.30.24:9265/";
 function userAdmin() {
     const login = Cookies.get('login');
     if (admins.includes(login)) {
@@ -52,7 +53,7 @@ const Logs = () => {
         setLoading(true);
 
         try {
-            const response = await axios.get(baseURL + 'logs', {
+            const response = await axios.get(default_host + 'logs', {
                 params: {
                     startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
                     endDate: endDate ? endDate.format('YYYY-MM-DD') : null,

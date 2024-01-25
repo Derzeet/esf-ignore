@@ -29,7 +29,7 @@ const Login = () => {
         };
 
         try {
-            const response = await axios.post(default_host + "/api/login", loginRequest);
+            const response = await axios.post(default_host + "api/login", loginRequest);
             Cookies.set('token', response.data.token);
             Cookies.set('login', response.data.login);
             // console.log(response.data.status); // Handle the response as neede

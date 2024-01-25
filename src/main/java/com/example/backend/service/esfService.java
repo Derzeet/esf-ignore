@@ -32,7 +32,6 @@ public class esfService {
 
         // Create header row
         Row headerRow = sheet.createRow(0);
-        int columnCount = data.get(0).size();
         int columnIndex = 0;
         for (String fieldName : data.get(0).keySet()) {
             Cell cell = headerRow.createCell(columnIndex++);
@@ -67,14 +66,19 @@ public class esfService {
         outputStream.close();
     }
 
-    public List<Map<String, Object>> executeQueryWithOptions(String filter, String search, String startDate, String endDate, String[] groupField) {
-        String query = "SELECT ";
+    public List<Map<String, Object>> getAllFields(String filter, String search, String startDate, String endDate, String[] groupField) {
+        String query = "SELECT PRODUCT_NUMBER, " +
+                "DESCRIPTION, UNIT_CODE, UNIT_NOMENCLATURE, QUANTITY, UNIT_PRICE, EXCISE_RATE, EXCISE_AMOUNT, TURNOVER_SIZE, NDS_RATE, NDS_AMOUNT, " +
+                "APPNUM_UNION, TRUORIGINCODE, IIN_SELLER, IIN_SELLER_ROOT, NAMES_SELLER, STATUS_SELLER, SHARE_PARTICIPATION_SELLER, " +
+                "IIN_CUSTOMER, IIN_CUSTOMER_ROOT, NAME_CUSTOMER, STATUS_CUSTOMER, SHARE_PARTICIPATION_CUSTOMER, REGISTRATION_NUMBER, " +
+                "INVOICE_TYPE, INVOICE_NUMBER, INVOICE_DATE, TURNOVER_DATE, TOTALTURNOVERSIZE, TOTALNDSAMOUNT, " +
+                "KOGD, YEAR, insert_date, Quartile FROM esf.esf_new_2 ";
         for (String field : groupField) {
             query = query + field + ", ";
         }
         String[] iins = search.split(",");
-        query = query + "sum(TURNOVER_SIZE) as Total, sum(QUANTITY) as QUANTITY FROM esf.esf_new ";
-        if (filter == "seller") {
+        System.out.println(filter);
+        if (filter.equals("seller")) {
             query = query + "WHERE IIN_SELLER IN (";
             int l = iins.length;
             for (int i = 0; i < l; i++) {
@@ -84,7 +88,7 @@ public class esfService {
                     query = query + "\'" + iins[i] + "\') ";
                 }
             }
-        } else {
+        } else if (filter.equals("custumer")) {
             query = query + "WHERE IIN_CUSTOMER IN (";
             int l = iins.length;
             for (int i = 0; i < l; i++) {
@@ -96,16 +100,54 @@ public class esfService {
             }
         }
         query = query +" AND toDate(TURNOVER_DATE) >= toDate(\'" + startDate + "\') " +
-        "AND toDate(TURNOVER_DATE) <= toDate(\'" + endDate + "\') GROUP BY ";
-        for (String field : groupField) {
-            query = query + field + ", ";
-        }
-        query = query + "NAMES_SELLER, NAME_CUSTOMER LIMIT 1000000";
+                "AND toDate(TURNOVER_DATE) <= toDate(\'" + endDate + "\') LIMIT 100000";
         List<Map<String, Object>> result = new ArrayList<>();
         try {
             return jdbcTemplate.queryForList(query);
         } catch (Exception e) {
             return result;
         }
+    }
+
+    public List<Map<String, Object>> executeQueryWithOptions(String filter, String search, String startDate, String endDate, String[] groupField) {
+        String query = "SELECT ";
+        for (String field : groupField) {
+            query = query + field + ", ";
+        }
+        String[] iins = search.split(",");
+        query = query + "NAMES_SELLER, NAME_CUSTOMER, sumIf(TURNOVER_SIZE,YEAR(TURNOVER_DATE)= 2019) AS \"2019\",sumIf(TURNOVER_SIZE,YEAR(TURNOVER_DATE)= 2020) as \"2020\",sumIf(TURNOVER_SIZE,YEAR(TURNOVER_DATE)= 2021) as \"2021\",sumIf(TURNOVER_SIZE,YEAR(TURNOVER_DATE)= 2022) as \"2022\",sumIf(TURNOVER_SIZE,YEAR(TURNOVER_DATE)= 2023) as \"2023\", ROUND(sum(TURNOVER_SIZE)) as Total, sum(QUANTITY) as QUANTITY FROM esf.esf_new_2 ";
+        if (filter.equals("seller")) {
+            query = query + "WHERE IIN_SELLER IN (";
+            int l = iins.length;
+            for (int i = 0; i < l; i++) {
+                if (i != l-1) {
+                    query = query + "\'" + iins[i] + "\',";
+                } else {
+                    query = query + "\'" + iins[i] + "\') ";
+                }
+            }
+        } else if (filter.equals("custumer")) {
+            query = query + "WHERE IIN_CUSTOMER IN (";
+            int l = iins.length;
+            for (int i = 0; i < l; i++) {
+                if (i != l-1) {
+                    query = query + "\'" + iins[i] + "\',";
+                } else {
+                    query = query + "\'" + iins[i] + "\') ";
+                }
+            }
+        }
+        query = query +" AND toDate(TURNOVER_DATE) >= toDate(\'" + startDate + "\') " +
+                "AND toDate(TURNOVER_DATE) <= toDate(\'" + endDate + "\') GROUP BY ";
+        for (String field : groupField) {
+            query = query + field + ", ";
+        }
+        query = query + "NAMES_SELLER, NAME_CUSTOMER LIMIT 1000000";
+        List<Map<String, Object>> result = new ArrayList<>();
+//        try {
+            return jdbcTemplate.queryForList(query);
+//        } catch (Exception e) {
+//            return result;
+//        }
     }
 }
